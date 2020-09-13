@@ -7,8 +7,8 @@ const messageSchema = new Schema({
   creator: { type: mongoose.Types.ObjectId, required: true, ref: "User" },
   owner: { type: mongoose.Types.ObjectId, required: true, ref: "User" },
   reply: {
-    creator: { type: mongoose.Types.ObjectId, required: true, ref: "User" },
-    id: { type: mongoose.Types.ObjectId, required: true, ref: "Reply" },
+    creator: { type: mongoose.Types.ObjectId, ref: "User" },
+    id: { type: mongoose.Types.ObjectId, ref: "Reply" },
   },
 });
 
