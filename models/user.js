@@ -13,7 +13,7 @@ const userSchema = new Schema({
   ownedMessages: [
     { type: mongoose.Types.ObjectId, required: true, ref: "Message" },
   ],
-  reply: { type: String },
+  replies: [{ type: mongoose.Types.ObjectId, required: true, ref: "Reply" }],
 });
 
 userSchema.plugin(uniqueValidator);

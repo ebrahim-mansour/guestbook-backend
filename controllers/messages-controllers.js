@@ -4,6 +4,38 @@ const mongoose = require("mongoose");
 const HttpError = require("../models/http-error");
 const Message = require("../models/message");
 const User = require("../models/user");
+const Reply = require("../models/reply");
+
+const getMessagesByUserId = async (req, res, next) => {
+  const userId = req.params.uid;
+
+  let userWithOwnedMessages;
+  try {
+    userWithOwnedMessages = await User.findById(userId).populate(
+      "ownedMessages"
+    );
+  } catch (err) {
+    const error = new HttpError(
+      "Fetching messages failed, please try again later",
+      500
+    );
+    return next(error);
+  }
+
+  if (
+    !userWithOwnedMessages ||
+    userWithOwnedMessages.ownedMessages.length === 0
+  ) {
+    userWithOwnedMessages = {};
+    userWithOwnedMessages.ownedMessages = [];
+  }
+
+  res.json({
+    ownedMessages: userWithOwnedMessages.ownedMessages.map((message) =>
+      message.toObject({ getters: true })
+    ),
+  });
+};
 
 const createMessage = async (req, res, next) => {
   const errors = validationResult(req);
@@ -103,6 +135,11 @@ const updateMessage = async (req, res, next) => {
 };
 
 const deleteMessage = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new HttpError("Invalid inputs", 422));
+  }
+
   const messageId = req.body.messageId;
 
   let message;
@@ -152,6 +189,70 @@ const deleteMessage = async (req, res, next) => {
   res.status(200).json({ message: "Message deleted" });
 };
 
+const replyToMessage = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new HttpError("Invalid inputs", 422));
+  }
+
+  const { replyBody, messageId } = req.body;
+
+  let message;
+  try {
+    message = await Message.findById(messageId).populate("reply");
+  } catch (err) {
+    console.log(err);
+    const error = new HttpError(
+      "Something went wrong, could not reply to message",
+      500
+    );
+    return next(error);
+  }
+
+  if (!message) {
+    const error = new HttpError("Could not find a message for this id", 404);
+    return next(error);
+  }
+
+  // TODO: Get userId from userData.userId
+  if (message.owner.toString() !== "5f5df499b7d59737d0bb07c9") {
+    const error = new HttpError("Your are not allowed to reply", 401);
+    return next(error);
+  }
+
+  const createdReply = new Reply({
+    replyBody,
+    creator: "5f5df499b7d59737d0bb07c9",
+    message: message.id,
+  });
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await createdReply.save({ session: sess });
+    if (!message.owner.replies) {
+      message.owner.replies = [createdReply];
+    } else {
+      message.owner.replies.push(createdReply);
+    }
+    message.reply.creator = "5f5df499b7d59737d0bb07c9";
+    message.reply.id = createdReply.id;
+    await message.save({ session: sess });
+    await sess.commitTransaction();
+  } catch (err) {
+    console.log(err);
+    const error = new HttpError(
+      "Something went wrong, could not delete message",
+      500
+    );
+    return next(error);
+  }
+
+  res.status(201).json({ createdReply });
+};
+
+exports.getMessagesByUserId = getMessagesByUserId;
 exports.createMessage = createMessage;
 exports.updateMessage = updateMessage;
 exports.deleteMessage = deleteMessage;
+exports.replyToMessage = replyToMessage;
