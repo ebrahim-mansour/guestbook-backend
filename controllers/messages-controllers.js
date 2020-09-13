@@ -60,4 +60,47 @@ const createMessage = async (req, res, next) => {
   res.status(201).json({ message: createdMessage });
 };
 
+const updateMessage = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new HttpError("Invalid inputs", 422);
+  }
+
+  const { msgBody, messageId } = req.body;
+
+  let message;
+  try {
+    message = await Message.findById(messageId);
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not update message",
+      500
+    );
+    return next(error);
+  }
+
+  // TODO: Get userId from userData.userId
+  if (message.creator.toString() !== "5f5df4a1b7d59737d0bb07ca") {
+    const error = new HttpError(
+      "Your are not allowed to edit this message",
+      401
+    );
+    return next(error);
+  }
+
+  message.msgBody = msgBody;
+
+  try {
+    await message.save();
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not update message",
+      500
+    );
+    return next(error);
+  }
+  res.status(200).json({ message: message.toObject({ getters: true }) });
+};
+
 exports.createMessage = createMessage;
+exports.updateMessage = updateMessage;

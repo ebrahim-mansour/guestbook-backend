@@ -7,11 +7,14 @@ const router = express.Router();
 
 router.post(
   "/create",
-  [
-    check("msgBody").not().isEmpty(),
-    check("owner").not().isEmpty(),
-  ],
+  [check("msgBody").not().isEmpty(), check("owner").not().isEmpty()],
   messagesController.createMessage
+);
+
+router.patch(
+  "/message",
+  [check("msgBody").not().isEmpty()],
+  messagesController.updateMessage
 );
 
 module.exports = router;
