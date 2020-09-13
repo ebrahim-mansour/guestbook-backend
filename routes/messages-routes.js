@@ -17,4 +17,6 @@ router.patch(
   messagesController.updateMessage
 );
 
+router.delete("/message", messagesController.deleteMessage);
+
 module.exports = router;

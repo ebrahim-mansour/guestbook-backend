@@ -102,5 +102,56 @@ const updateMessage = async (req, res, next) => {
   res.status(200).json({ message: message.toObject({ getters: true }) });
 };
 
+const deleteMessage = async (req, res, next) => {
+  const messageId = req.body.messageId;
+
+  let message;
+  try {
+    message = await Message.findById(messageId).populate("creator owner");
+  } catch (err) {
+    console.log(err);
+    const error = new HttpError(
+      "Something went wrong, could not delete message",
+      500
+    );
+    return next(error);
+  }
+
+  if (!message) {
+    const error = new HttpError("Could not find a message for this id", 404);
+    return next(error);
+  }
+
+  // TODO: Get userId from userData.userId
+  if (message.creator.id !== "5f5df4a1b7d59737d0bb07ca") {
+    const error = new HttpError(
+      "Your are not allowed to delete this message",
+      401
+    );
+    return next(error);
+  }
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await message.remove({ session: sess });
+    message.creator.createdMessages.pull(message);
+    await message.creator.save();
+    message.owner.ownedMessages.pull(message);
+    await message.owner.save();
+    await sess.commitTransaction();
+  } catch (err) {
+    console.log(err);
+    const error = new HttpError(
+      "Something went wrong, could not delete message",
+      500
+    );
+    return next(error);
+  }
+
+  res.status(200).json({ message: "Message deleted" });
+};
+
 exports.createMessage = createMessage;
 exports.updateMessage = updateMessage;
+exports.deleteMessage = deleteMessage;
