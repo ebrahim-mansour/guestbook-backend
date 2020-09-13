@@ -49,14 +49,14 @@ const createMessage = async (req, res, next) => {
   const createdMessage = new Message({
     msgBody,
     owner,
-    creator: "5f5df4a1b7d59737d0bb07ca",
+    creator: req.userData.userId,
   });
 
   let creatorUser;
   let ownerUser;
   try {
     // TODO: Get userId from userData.userId
-    creatorUser = await User.findById("5f5df4a1b7d59737d0bb07ca");
+    creatorUser = await User.findById(req.userData.userId);
     ownerUser = await User.findById(owner);
   } catch (err) {
     console.log(err);
@@ -112,7 +112,7 @@ const updateMessage = async (req, res, next) => {
   }
 
   // TODO: Get userId from userData.userId
-  if (message.creator.toString() !== "5f5df4a1b7d59737d0bb07ca") {
+  if (message.creator.toString() !== req.userData.userId) {
     const error = new HttpError(
       "Your are not allowed to edit this message",
       401
@@ -160,7 +160,7 @@ const deleteMessage = async (req, res, next) => {
   }
 
   // TODO: Get userId from userData.userId
-  if (message.creator.id !== "5f5df4a1b7d59737d0bb07ca") {
+  if (message.creator.id !== req.userData.userId) {
     const error = new HttpError(
       "Your are not allowed to delete this message",
       401
@@ -215,14 +215,14 @@ const replyToMessage = async (req, res, next) => {
   }
 
   // TODO: Get userId from userData.userId
-  if (message.owner.toString() !== "5f5df499b7d59737d0bb07c9") {
+  if (message.owner.toString() !== req.userData.userId) {
     const error = new HttpError("Your are not allowed to reply", 401);
     return next(error);
   }
 
   const createdReply = new Reply({
     replyBody,
-    creator: "5f5df499b7d59737d0bb07c9",
+    creator: req.userData.userId,
     message: message.id,
   });
 
@@ -235,7 +235,7 @@ const replyToMessage = async (req, res, next) => {
     } else {
       message.owner.replies.push(createdReply);
     }
-    message.reply.creator = "5f5df499b7d59737d0bb07c9";
+    message.reply.creator = req.userData.userId;
     message.reply.id = createdReply.id;
     await message.save({ session: sess });
     await sess.commitTransaction();

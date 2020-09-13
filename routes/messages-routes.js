@@ -2,10 +2,13 @@ const express = require("express");
 const { check } = require("express-validator");
 
 const messagesController = require("../controllers/messages-controllers");
+const checkAuth = require("../middleware/check-auth");
 
 const router = express.Router();
 
 router.get("/user/:uid", messagesController.getMessagesByUserId);
+
+router.use(checkAuth);
 
 router.post(
   "/create",
