@@ -4,7 +4,6 @@ const mongoose = require("mongoose");
 const HttpError = require("../models/http-error");
 const Message = require("../models/message");
 const User = require("../models/user");
-const Reply = require("../models/reply");
 
 const getMessagesByUserId = async (req, res, next) => {
   const userId = req.params.uid;
@@ -45,7 +44,6 @@ const createMessage = async (req, res, next) => {
 
   const { msgBody, owner } = req.body;
 
-  // TODO: Get userId from userData.userId
   const createdMessage = new Message({
     msgBody,
     owner,
@@ -55,7 +53,6 @@ const createMessage = async (req, res, next) => {
   let creatorUser;
   let ownerUser;
   try {
-    // TODO: Get userId from userData.userId
     creatorUser = await User.findById(req.userData.userId);
     ownerUser = await User.findById(owner);
   } catch (err) {
@@ -111,7 +108,6 @@ const updateMessage = async (req, res, next) => {
     return next(error);
   }
 
-  // TODO: Get userId from userData.userId
   if (message.creator.toString() !== req.userData.userId) {
     const error = new HttpError(
       "Your are not allowed to edit this message",
@@ -159,7 +155,6 @@ const deleteMessage = async (req, res, next) => {
     return next(error);
   }
 
-  // TODO: Get userId from userData.userId
   if (message.creator.id !== req.userData.userId) {
     const error = new HttpError(
       "Your are not allowed to delete this message",
@@ -199,7 +194,7 @@ const replyToMessage = async (req, res, next) => {
 
   let message;
   try {
-    message = await Message.findById(messageId).populate("reply");
+    message = await Message.findById(messageId);
   } catch (err) {
     console.log(err);
     const error = new HttpError(
@@ -214,31 +209,15 @@ const replyToMessage = async (req, res, next) => {
     return next(error);
   }
 
-  // TODO: Get userId from userData.userId
-  if (message.owner.toString() !== req.userData.userId) {
+  if (message.owner.toString() !== req.userData.userId || message.reply) {
     const error = new HttpError("Your are not allowed to reply", 401);
     return next(error);
   }
 
-  const createdReply = new Reply({
-    replyBody,
-    creator: req.userData.userId,
-    message: message.id,
-  });
+  message.reply = replyBody;
 
   try {
-    const sess = await mongoose.startSession();
-    sess.startTransaction();
-    await createdReply.save({ session: sess });
-    if (!message.owner.replies) {
-      message.owner.replies = [createdReply];
-    } else {
-      message.owner.replies.push(createdReply);
-    }
-    message.reply.creator = req.userData.userId;
-    message.reply.id = createdReply.id;
-    await message.save({ session: sess });
-    await sess.commitTransaction();
+    await message.save();
   } catch (err) {
     console.log(err);
     const error = new HttpError(
@@ -248,7 +227,7 @@ const replyToMessage = async (req, res, next) => {
     return next(error);
   }
 
-  res.status(201).json({ createdReply });
+  res.status(201).json({ message });
 };
 
 exports.getMessagesByUserId = getMessagesByUserId;
