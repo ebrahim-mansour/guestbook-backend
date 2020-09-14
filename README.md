@@ -1,6 +1,6 @@
 # GuestBook, A Live Guestbook System
 
-https://limitless-stream-31809.herokuapp.com
+https://guestbook-backend.herokuapp.com/api/users
 
 ## Project Description
 
