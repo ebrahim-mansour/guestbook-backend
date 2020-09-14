@@ -4,7 +4,8 @@
   "description": "A simple guestbook backend app",
   "main": "bin/www",
   "scripts": {
-    "start": "nodemon bin/www"
+    "start:dev": "nodemon bin/www",
+    "start": "node bin/www"
   },
   "keywords": [],
   "author": "Ebrahim Mansour",

@@ -25,7 +25,7 @@ Setting up the local server
 
 ```
 1) git clone https://github.com/ebrahimamer/guestbook-backend
-2) Open terminal and change its location the where you cloned the repo
+2) Open terminal and change its location where you cloned the repo
 3) Run command npm install
 4) After all dependencies are installed. 
 5) Add nodemon.json file in the project root directory and add the following: 
@@ -38,7 +38,7 @@ Setting up the local server
     }
 }
 with your credentials
-6) In your terminal, Run command: npm start
+6) In your terminal, Run command: npm run start:dev
 5) Now, server is running on http://localhost:5000
 ```
 
