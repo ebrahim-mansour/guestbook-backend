@@ -39,7 +39,7 @@ Setting up the local server
 }
 with your credentials
 6) In your terminal, Run command: npm run start:dev
-5) Now, server is running on http://localhost:5000
+7) Now, server is running on http://localhost:5000
 ```
 
 ## Author
